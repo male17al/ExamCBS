@@ -31,12 +31,21 @@ public class UserEndpoints {
     // TODO: Add Encryption to JSON : FIX
     // Convert the user object to json in order to return the object
     String json = new Gson().toJson(user);
+
+    //Encryption added through the encryption method in utils
     json = Encryption.encryptDecryptXOR(json);
 
     // Return the user with the status code 200
-    // TODO: What should happen if something breaks down?
-    return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-  }
+    // TODO: What should happen if something breaks down? : FIX??
+
+    //if user id exists return status code 200, OK, and if the user id doesn't exist status code 404, not found, is returned.
+    if (user != null) {
+      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
+    }
+    else {
+      return Response.status(404).build();
+    }
+    }
 
   /** @return Responses */
   @GET
@@ -52,6 +61,8 @@ public class UserEndpoints {
     // TODO: Add Encryption to JSON : FIX
     // Transfer users to json in order to return it to the user
     String json = new Gson().toJson(users);
+
+    //Encryption added through the encryption method in utils
     json = Encryption.encryptDecryptXOR(json);
 
     // Return the users with the status code 200

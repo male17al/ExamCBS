@@ -30,10 +30,13 @@ public class ProductEndpoints {
     // TODO: Add Encryption to JSON : FIX
     // We convert the java object to json with GSON library imported in Maven
     String json = new Gson().toJson(product);
+
+    //Encryption added through the encryption method in utils
     json = Encryption.encryptDecryptXOR(json);
 
     // Return a response with status 200 and JSON as type
-    return Response.status(200).type(MediaType.TEXT_PLAIN_TYPE).entity(json).build();
+    // Changed the type from TEXT_PLAIN_TYPE to APPLICATION_JSON
+    return Response.status(200).type(MediaType.APPLICATION_JSON).entity(json).build();
   }
 
   /** @return Responses */
@@ -47,10 +50,13 @@ public class ProductEndpoints {
     // TODO: Add Encryption to JSON : FIX
     // We convert the java object to json with GSON library imported in Maven
     String json = new Gson().toJson(products);
+
+    //Encryption added through the encryption method in utils
     json = Encryption.encryptDecryptXOR(json);
 
     // Return a response with status 200 and JSON as type
-    return Response.status(200).type(MediaType.TEXT_PLAIN_TYPE).entity(json).build();
+    // Changed the type from TEXT_PLAIN_TYPE to APPLICATION_JSON
+    return Response.status(200).type(MediaType.APPLICATION_JSON).entity(json).build();
   }
 
   @POST
