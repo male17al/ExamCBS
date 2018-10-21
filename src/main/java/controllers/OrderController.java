@@ -138,6 +138,7 @@ public class OrderController {
 
     // TODO: Enable transactions in order for us to not save the order if somethings fails for some of the other inserts.
     //Checksum skal laves på en eller anden måde..
+    //Atomicitet, hvordan?
 
 
     // Insert the product in the DB

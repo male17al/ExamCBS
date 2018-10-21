@@ -3,6 +3,8 @@ package utils;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
 import org.bouncycastle.util.encoders.Hex;
 
 public final class Hashing {
@@ -46,16 +48,33 @@ public final class Hashing {
       // We convert to byte array
       byte[] hash = digest.digest(rawString.getBytes(StandardCharsets.UTF_8));
 
+      //Create salt byte from the getSalt method
+      byte [] salt = getSalt();
+
       // We create the hashed string
       String sha256hex = new String(Hex.encode(hash));
 
       // And return the string
-      return sha256hex;
+      return sha256hex + salt;
 
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
     }
 
     return rawString;
+  }
+
+  //Salt method found on the internet
+  //Source: https://howtodoinjava.com/security/how-to-generate-secure-password-hash-md5-sha-pbkdf2-bcrypt-examples/#md5-salt
+
+  private static byte [] getSalt() throws NoSuchAlgorithmException {
+    //Using SecureRandom generator
+    SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+    //Create array for the salt
+    byte [] salt = new byte [16];
+    //Get a random generated salt
+    sr.nextBytes(salt);
+    //Returning the random generated salt
+    return salt;
   }
 }

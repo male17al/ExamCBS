@@ -25,6 +25,8 @@ public class UserEndpoints {
   @Path("/{idUser}")
   public Response getUser(@PathParam("idUser") int idUser) {
 
+    try {
+
     // Use the ID to get the user from the controller.
     User user = UserController.getUser(idUser);
 
@@ -35,17 +37,24 @@ public class UserEndpoints {
     //Encryption added through the encryption method in utils
     json = Encryption.encryptDecryptXOR(json);
 
-    // Return the user with the status code 200
-    // TODO: What should happen if something breaks down? : FIX??
+    // TODO: What should happen if something breaks down? : FIX
+      //Failure-handling
+      //Try-catch is cathing exceptions if something goes wrong
 
-    //if user id exists return status code 200, OK, and if the user id doesn't exist status code 404, not found, is returned.
-    if (user != null) {
-      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-    }
-    else {
+      /*Furthermore if-else construction is made to return either status code 200 (OK) if the user id exist
+      or status code 404 (NOT FOUND) if user id doesn't exist.*/
+      if (user != null) {
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
+      }
+      else {
+        //Returning status code 404 but showing "User ID not found" to the user.
+        return Response.status(404).entity("User ID not found").build();
+      }
+      } catch (Exception e) {
       return Response.status(404).build();
     }
-    }
+  }
+
 
   /** @return Responses */
   @GET
