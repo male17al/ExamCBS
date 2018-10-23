@@ -143,11 +143,10 @@ public class UserController {
       dbCon = new DatabaseController();
     }
 
-    if (userID != 0) {
     // Delete user in DB
     dbCon.delete(
-            "DELETE * FROM user where id=" +userID);
-    }
+            "DELETE FROM user where id=" +userID);
+
 
   }
 

@@ -114,32 +114,34 @@ public class UserEndpoints {
   // TODO: Make the system able to delete users
 
     @POST
-    @Path("/")
+    @Path("/deleteuser")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteUser(String userID) {
 
       // Read the json from body and transfer it to a user class
-      String chosenUser = new Gson().fromJson(userID, String.class);
+      User chosenUserID = new Gson().fromJson(userID, User.class);
 
-      // Use the controller to delete the user
-      int chosenUserID = Integer.parseInt(chosenUser);
+      if (doesUserIDExist(chosenUserID.getId())) {
 
-      UserController.deleteUser((chosenUserID));
+      // Use the controller to delete the user with the chosen user ID
+      UserController.deleteUser((chosenUserID.getId()));
 
-      // Return the data to the user
-      if (userID != null) {
+        // Return if the user could be deleted or not
         // Return a response with status 200 and JSON as type
-        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUser + " has been deleted").build();
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUserID.getId() + " has been deleted").build();
       } else {
-        return Response.status(400).entity("Could not delete user").build();
+        return Response.status(400).entity("User ID not found").build();
       }
     }
-
 
   // TODO: Make the system able to update users
   public Response updateUser(String x) {
 
     // Return a response with status 200 and JSON as type
     return Response.status(400).entity("Endpoint not implemented yet").build();
+  }
+
+  private Boolean doesUserIDExist (int userID) {
+    return UserController.getUser(userID) != null;
   }
 }

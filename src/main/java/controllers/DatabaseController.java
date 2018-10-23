@@ -111,10 +111,7 @@ public class DatabaseController {
     return result;
   }
 
-  public int delete (String sql) {
-
-    // Set key to 0 as a start
-    int result = 0;
+  public void delete (String sql) {
 
     // Check that we have connection
     if (connection == null)
@@ -126,19 +123,11 @@ public class DatabaseController {
               connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
       // Execute query
-      result = statement.executeUpdate();
+      statement.executeUpdate();
 
-      // Get our key back in order to update the user
-      ResultSet generatedKeys = statement.getGeneratedKeys();
-      if (generatedKeys.next()) {
-        return generatedKeys.getInt(1);
-      }
+
     } catch (SQLException e) {
       System.out.println(e.getMessage());
     }
-
-    // Return the resultset which at this point will be null
-    return result;
-
   }
 }
