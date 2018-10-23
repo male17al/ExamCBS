@@ -132,4 +132,23 @@ public class UserController {
     // Return user
     return user;
   }
-}
+
+  public static void deleteUser (int userID) {
+
+    // Write in log that we've reached this step
+    Log.writeLog(UserController.class.getName(), userID, "Actually deleting a user in the DB", 0);
+
+    // Check for DB Connection
+    if (dbCon == null) {
+      dbCon = new DatabaseController();
+    }
+
+    if (userID != 0) {
+    // Delete user in DB
+    dbCon.delete(
+            "DELETE * FROM user where id=" +userID);
+    }
+
+  }
+
+  }
