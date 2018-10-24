@@ -114,7 +114,7 @@ public class UserEndpoints {
   // TODO: Make the system able to delete users
 
     @POST
-    @Path("/deleteuser")
+    @Path("/deleteuser/")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteUser(String userID) {
 
@@ -135,10 +135,30 @@ public class UserEndpoints {
     }
 
   // TODO: Make the system able to update users
-  public Response updateUser(String x) {
+  @POST
+  @Path("/updateUser/{userID}")
+  @Consumes(MediaType.APPLICATION_JSON)
 
-    // Return a response with status 200 and JSON as type
-    return Response.status(400).entity("Endpoint not implemented yet").build();
+  public Response updateUser(@PathParam("userID") int userID, String body) {
+
+    try {
+      User chosenUser = UserController.getUser(userID);
+
+      User userToUpdate = new Gson().fromJson(body, User.class);
+
+      UserController.updateUser(chosenUser);
+
+      String json = new Gson().toJson(userToUpdate);
+
+      if (chosenUser != null) {
+        // Return a response with status 200 and JSON as type
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
+      } else {
+        return Response.status(404).entity("User id not found").build();
+      }
+    } catch (Exception e) {
+      return Response.status(404).build();
+    }
   }
 
   private Boolean doesUserIDExist (int userID) {

@@ -25,13 +25,13 @@ public class DatabaseController {
     try {
       // Set the dataabase connect with the data from the config
       String url =
-          "jdbc:mysql://"
-              + Config.getDatabaseHost()
-              + ":"
-              + Config.getDatabasePort()
-              + "/"
-              + Config.getDatabaseName()
-              + "?serverTimezone=CET";
+              "jdbc:mysql://"
+                      + Config.getDatabaseHost()
+                      + ":"
+                      + Config.getDatabasePort()
+                      + "/"
+                      + Config.getDatabaseName()
+                      + "?serverTimezone=CET";
 
       String user = Config.getDatabaseUsername();
       String password = Config.getDatabasePassword();
@@ -93,7 +93,7 @@ public class DatabaseController {
     try {
       // Build the statement up in a safe way
       PreparedStatement statement =
-          connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+              connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
       // Execute query
       result = statement.executeUpdate();
@@ -111,7 +111,7 @@ public class DatabaseController {
     return result;
   }
 
-  public void delete (String sql) {
+  public void delete(String sql) {
 
     // Check that we have connection
     if (connection == null)
@@ -121,6 +121,26 @@ public class DatabaseController {
       // Build the statement up in a safe way
       PreparedStatement statement =
               connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+      // Execute query
+      statement.executeUpdate();
+
+
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+
+  public void update(String sql) {
+
+    // Check that we have connection
+    if (connection == null)
+      connection = getConnection();
+
+    try {
+      // Build the statement up in a safe way
+      PreparedStatement statement =
+              connection.prepareStatement(sql);
 
       // Execute query
       statement.executeUpdate();
