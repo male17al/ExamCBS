@@ -150,28 +150,21 @@ public class UserController {
 
   }
 
-  public static User updateUser (User chosenuser, int id) {
+  public static User updateUser (int idUser, User newUserData) {
 
     // Write in log that we've reached this step
-    Log.writeLog(UserController.class.getName(), chosenuser, "Actually deleting a user in the DB", 0);
+    Log.writeLog(UserController.class.getName(), newUserData, "Actually updating a user in the DB", 0);
 
     // Check for DB Connection
     if (dbCon == null) {
       dbCon = new DatabaseController();
     }
-    String sql = "SELECT * FROM user where id=" + id;
-    dbCon.update (
-            "UPDATE user(first_name, last_name, password, email) WHERE id="+id+" VALUES('"
-                    + chosenuser.getFirstname()
-                    + "', '"
-                    + chosenuser.getLastname()
-                    + "', '"
-                    + chosenuser.getPassword()
-                    + "', '"
-                    + chosenuser.getEmail()
-                    + "', '");
 
-  return chosenuser;
+    //Update user data in DB
+    dbCon.update (
+            "UPDATE user SET first_name='"+newUserData.getFirstname()+"', last_name='"+newUserData.getLastname()+"', password='"+newUserData.getPassword()+"', email='"+newUserData.getEmail()+"' WHERE id='"+idUser+"'");
+
+  return newUserData;
   }
 
   }

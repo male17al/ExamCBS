@@ -136,19 +136,26 @@ public class UserEndpoints {
 
   // TODO: Make the system able to update users
   @POST
-  @Path("/updateUser/{userID}")
+  @Path("/updateUser/{idUser}")
   @Consumes(MediaType.APPLICATION_JSON)
 
-  public Response updateUser(@PathParam("userID") int userID, String body) {
+  public Response updateUser(@PathParam("idUser") int idUser, String body) {
 
     try {
-      User chosenUser = UserController.getUser(userID);
+      // Use the ID to get the user from the controller.
+      User chosenUser = UserController.getUser(idUser);
 
-      User userToUpdate = new Gson().fromJson(body, User.class);
+      // Read the json from body and transfer it to a user class
+      User newUserData = new Gson().fromJson(body, User.class);
 
-      UserController.updateUser(chosenUser);
+      //Update the user with the chosen id with the new data
+      UserController.updateUser(idUser, newUserData);
 
-      String json = new Gson().toJson(userToUpdate);
+      //Creating new user object in order for the program to print out the new user data with the user id
+      User updatedUser = UserController.getUser(idUser);
+
+      // Convert the user object to json in order to return the object
+      String json = new Gson().toJson(updatedUser);
 
       if (chosenUser != null) {
         // Return a response with status 200 and JSON as type
