@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import model.User;
+import utils.Hashing;
 import utils.Log;
 
 public class UserController {
@@ -114,7 +115,7 @@ public class UserController {
             + "', '"
             + user.getLastname()
             + "', '"
-            + user.getPassword()
+            + Hashing.md5(user.getPassword())
             + "', '"
             + user.getEmail()
             + "', "
@@ -151,6 +152,8 @@ public class UserController {
   }
 
   public static User updateUser (int idUser, User newUserData) {
+
+    // TODO: Hash password igen når der opdateres!! (Ikke en af henriks TODO, bare en note)
 
     // Write in log that we've reached this step
     Log.writeLog(UserController.class.getName(), newUserData, "Actually updating a user in the DB", 0);

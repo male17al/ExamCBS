@@ -9,12 +9,15 @@ import org.bouncycastle.util.encoders.Hex;
 
 public final class Hashing {
 
-  // TODO: You should add a salt and make this secure
+  // TODO: You should add a salt and make this secure : FIX
   public static String md5(String rawString) {
     try {
 
       // We load the hashing algoritm we wish to use.
       MessageDigest md = MessageDigest.getInstance("MD5");
+
+      //Adding salt
+      md.update(getSalt());
 
       // We convert to byte array
       byte[] byteArray = md.digest(rawString.getBytes());
@@ -39,23 +42,22 @@ public final class Hashing {
     return null;
   }
 
-  // TODO: You should add a salt and make this secure
+  // TODO: You should add a salt and make this secure : FIX
   public static String sha(String rawString) {
     try {
       // We load the hashing algoritm we wish to use.
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      //Adding salt
+      digest.update(getSalt());
 
       // We convert to byte array
       byte[] hash = digest.digest(rawString.getBytes(StandardCharsets.UTF_8));
-
-      //Create salt byte from the getSalt method
-      byte [] salt = getSalt();
 
       // We create the hashed string
       String sha256hex = new String(Hex.encode(hash));
 
       // And return the string
-      return sha256hex + salt;
+      return sha256hex;
 
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
@@ -70,7 +72,7 @@ public final class Hashing {
   private static byte [] getSalt() throws NoSuchAlgorithmException {
     //Using SecureRandom generator
     SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
-    //Create array for the salt
+    //Create byte array for the salt
     byte [] salt = new byte [16];
     //Get a random generated salt
     sr.nextBytes(salt);
