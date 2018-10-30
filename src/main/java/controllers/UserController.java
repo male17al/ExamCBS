@@ -109,13 +109,14 @@ public class UserController {
 
     // Insert the user in the DB
     // TODO: Hash the user password before saving it.
+    user.setPassword(Hashing.md5(user.getPassword()));
     int userID = dbCon.insert(
         "INSERT INTO user(first_name, last_name, password, email, created_at) VALUES('"
             + user.getFirstname()
             + "', '"
             + user.getLastname()
             + "', '"
-            + Hashing.md5(user.getPassword())
+            + user.getPassword()
             + "', '"
             + user.getEmail()
             + "', "
@@ -153,8 +154,6 @@ public class UserController {
 
   public static User updateUser (int idUser, User newUserData) {
 
-    // TODO: Hash password igen når der opdateres!! (Ikke en af henriks TODO, bare en note)
-
     // Write in log that we've reached this step
     Log.writeLog(UserController.class.getName(), newUserData, "Actually updating a user in the DB", 0);
 
@@ -163,6 +162,8 @@ public class UserController {
       dbCon = new DatabaseController();
     }
 
+    //User password is being hashed before updating
+    newUserData.setPassword(Hashing.md5(newUserData.getPassword()));
     //Update user data in DB
     dbCon.update (
             "UPDATE user SET first_name='"+newUserData.getFirstname()+"', last_name='"+newUserData.getLastname()+"', password='"+newUserData.getPassword()+"', email='"+newUserData.getEmail()+"' WHERE id='"+idUser+"'");
