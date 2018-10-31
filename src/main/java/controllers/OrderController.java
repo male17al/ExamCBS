@@ -101,7 +101,7 @@ public class OrderController {
                 rs.getFloat("order_total"),
                 rs.getLong("created_at"),
                 rs.getLong("updated_at"));
-
+        
         // Add order to our list
         orders.add(order);
 

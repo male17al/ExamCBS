@@ -66,9 +66,6 @@ public final class Hashing {
     return rawString;
   }
 
-  //Salt method found on the internet
-  //Source: https://howtodoinjava.com/security/how-to-generate-secure-password-hash-md5-sha-pbkdf2-bcrypt-examples/#md5-salt
-
   private static String getSalt() {
     return "SaltedString";
   }
