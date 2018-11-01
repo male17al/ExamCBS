@@ -8,15 +8,23 @@ public final class Encryption {
     if (Config.getEncryption()) {
 
       // The key is predefined and hidden in code
-      // TODO: Create a more complex code and store it somewhere better
-      char[] key = {'C', 'B', 'S'};
+      // TODO: Create a more complex code and store it somewhere better : FIX
+
+      //Stored encryptionKey in config.json as a string and parsing it to a char array
+      char [] encryptionKey = Config.getEncryptionKey().toCharArray();
+
 
       // Stringbuilder enables you to play around with strings and make useful stuff
       StringBuilder thisIsEncrypted = new StringBuilder();
 
-      // TODO: This is where the magic of XOR is happening. Are you able to explain what is going on?
+      // TODO: This is where the magic of XOR is happening. Are you able to explain what is going on? : FIX
+      //Using for loop to go through rawString (the json data).
       for (int i = 0; i < rawString.length(); i++) {
-        thisIsEncrypted.append((char) (rawString.charAt(i) ^ key[i % key.length]));
+        //We look at i and take the binary value of that char from rawString
+        //and doing exclusive or with the binary value of a char of the result (i% the length of the encryptionKey)
+        //then we'll have a new binary value that is appended to the stringbuilder.
+        //The reason we use modulus % is because we don't want to exceed the length of the encryptionKey char array.
+        thisIsEncrypted.append((char) (rawString.charAt(i) ^ encryptionKey[i % encryptionKey.length]));
       }
 
       // We return the encrypted string

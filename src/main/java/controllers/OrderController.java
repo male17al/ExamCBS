@@ -129,6 +129,8 @@ public class OrderController {
       }
 
       try {
+          //Set autoocmmit = false. This is by default set as true
+          //The reason its set to false is cause we dont want it to execute each statement but execute them all as "one" statement
       DatabaseController.getConnection().setAutoCommit(false);
 
       // Save addresses to database and save them back to initial order instance
@@ -173,25 +175,32 @@ public class OrderController {
 
       order.setLineItems(items);
       DatabaseController.getConnection().commit();
-      DatabaseController.getConnection().setAutoCommit(true);
 
-      //Return order
-        return order;
-    }
-    catch (SQLException e) {
-      System.out.println(e.getMessage());
-      //Checks if database connection is closed if not it will rollback
-      if (dbCon != null) {
-        try {
-          System.out.println("Failed. Doing a rollback");
-          DatabaseController.getConnection().rollback();
-        } catch (SQLException e1) {
-          System.out.println(e1.getMessage());
-        }
+          //Return order
+          return order;
       }
+    catch (SQLException e) {
+        System.out.println(e.getMessage());
+        //Checks if database connection is closed if not it will rollback
+        if (dbCon != null) {
+            try {
+                System.out.println("Failed. Doing a rollback");
+                DatabaseController.getConnection().rollback();
+            } catch (SQLException e1) {
+                System.out.println(e1.getMessage());
+            }
+        }
 
     }
-    //Return null
+    finally {
+          try {
+              //Set AutoCommit back to true again
+              DatabaseController.getConnection().setAutoCommit(true);
+          } catch (SQLException e2) {
+              System.out.println(e2.getMessage());
+          }
+      }
+      //Return null
     return order;
   }
 }

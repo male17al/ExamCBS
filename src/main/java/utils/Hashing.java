@@ -17,7 +17,7 @@ public final class Hashing {
       MessageDigest md = MessageDigest.getInstance("MD5");
 
       //Adding salt
-      //md.update(getSalt().getBytes());
+      md.update(Config.getSALT().getBytes());
 
       // We convert to byte array
       byte[] byteArray = md.digest(rawString.getBytes());
@@ -47,8 +47,9 @@ public final class Hashing {
     try {
       // We load the hashing algoritm we wish to use.
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
       //Adding salt
-      digest.update(getSalt().getBytes());
+      digest.update(Config.getSALT().getBytes());
 
       // We convert to byte array
       byte[] hash = digest.digest(rawString.getBytes(StandardCharsets.UTF_8));
@@ -64,9 +65,5 @@ public final class Hashing {
     }
 
     return rawString;
-  }
-
-  private static String getSalt() {
-    return "SaltedString";
   }
 }
