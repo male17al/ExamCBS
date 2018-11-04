@@ -40,6 +40,8 @@ public class UserController {
                 rs.getString("password"),
                 rs.getString("email"));
 
+
+
         // return the create object
         return user;
       } else {
@@ -82,6 +84,7 @@ public class UserController {
                 rs.getString("last_name"),
                 rs.getString("password"),
                 rs.getString("email"));
+
 
         // Add element to list
         users.add(user);
@@ -171,21 +174,56 @@ public class UserController {
   return newUserData;
   }
 
-  public static Boolean autorizeUser (String email, String password) {
+  public static User autorizeUser (String email, String password) {
       //check for DB connection
       if (dbCon == null) {
           dbCon = new DatabaseController();
       }
 
-      //Find user with the username and password entered
-      dbCon.query("SELECT * FROM user where email='"+email+"' AND password='"+password+"'");
+      //Build the query for DB
+    String sql = "SELECT * FROM user where email='"+email+"' AND password='"+password+"'";
 
-      if (email != null && password != null) {
-          return true;
+    //Actually do the query
+    ResultSet rs = dbCon.query(sql);
+    User user = null;
+
+    try {
+      if (rs.next()) {
+        user =
+                new User (
+                        rs.getInt("id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("password"),
+                        rs.getString("email"));
+
+        //Return the created object
+        return user;
       }
       else {
-          return false;
+        System.out.println("User not found");
       }
+    } catch (SQLException ex) {
+      System.out.println(ex.getMessage());
+    }
+    return user;
   }
 
+  public static String updateToken (String token, User user) {
+
+    // Write in log that we've reach this step
+    Log.writeLog(UserController.class.getName(), token, "Actually updating a token in DB", 0);
+
+    // Check for DB Connection
+    if (dbCon == null) {
+      dbCon = new DatabaseController();
+    }
+
+    // Insert the token in the DB
+    dbCon.update("UPDATE user SET token='"+token+"' WHERE id='"+user.getId()+"'");
+
+    // Return user
+    return token;
+
+  }
   }

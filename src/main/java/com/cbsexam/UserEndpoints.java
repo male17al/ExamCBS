@@ -124,27 +124,33 @@ public class UserEndpoints {
     // Read the json from body and transfer it to a user class
     User userData = new Gson().fromJson(body, User.class);
 
-    boolean authorize = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
+    User userToLogin = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
 
-    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    if (authorize) {
-      long time = System.currentTimeMillis();
-      String jwt = Jwts.builder()
-              .signWith(key)
-              .setSubject(Integer.toString(userData.getId()))
-              .setIssuedAt(new Date(time))
-              .setExpiration(new Date(time+1200000))
-              .compact();
+    //TODO: Husk at kryptere token
 
+    try {
+      if (userToLogin != null && userToLogin.getToken() == null) {
 
+        //Creating a token for the user
+        String token = createToken(userToLogin);
+
+        //Update token in DB
+        UserController.updateToken(token, userToLogin);
+
+        String json = new Gson().toJson(token);
+
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + json).build();
+
+      } else if (userToLogin != null && userToLogin.getToken() != null) {
+        String currentToken = userToLogin.getToken();
+
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + currentToken).build();
+      } else {
+        return Response.status(400).entity("Email or password are wrong").build();
+      }
+    } catch (Exception e) {
+      return Response.status(404).build();
     }
-
-
-      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-    }
-
-    // Return a response with status 200 and JSON as type
-    return Response.status(400).entity("Endpoint not implemented yet").build();*/
   }
 
   // TODO: Make the system able to delete users : FIX
@@ -206,5 +212,17 @@ public class UserEndpoints {
 
   private Boolean doesUserIDExist (int userID) {
     return UserController.getUser(userID) != null;
+  }
+
+  private String createToken (User user) {
+    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    long time = System.currentTimeMillis();
+    String jwt = Jwts.builder()
+            .signWith(key)
+            .setSubject(Integer.toString(user.getId()))
+            .setIssuedAt(new Date(time))
+            .setExpiration(new Date(time + 900000))
+            .compact();
+    return jwt;
   }
 }

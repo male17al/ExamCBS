@@ -8,6 +8,7 @@ public class User {
   public String email;
   private String password;
   private long createdTime;
+  private String token;
 
   public User(int id, String firstname, String lastname, String password, String email) {
     this.id = id;
@@ -19,6 +20,14 @@ public class User {
 
   public int getId() {
     return id;
+  }
+
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
   }
 
   public void setId(int id) {
