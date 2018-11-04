@@ -2,14 +2,22 @@ package com.cbsexam;
 
 import cache.UserCache;
 import com.google.gson.Gson;
+import com.sun.javafx.scene.traversal.Algorithm;
 import controllers.UserController;
 import java.util.ArrayList;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import io.jsonwebtoken.security.Keys;
 import model.User;
 import utils.Encryption;
 import utils.Log;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+import java.security.Key;
+import io.jsonwebtoken.*;
+import java.util.Date;
 
 @Path("user")
 public class UserEndpoints {
@@ -111,10 +119,32 @@ public class UserEndpoints {
   @POST
   @Path("/login")
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response loginUser(String x) {
+  public Response loginUser(String body) {
+
+    // Read the json from body and transfer it to a user class
+    User userData = new Gson().fromJson(body, User.class);
+
+    boolean authorize = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
+
+    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    if (authorize) {
+      long time = System.currentTimeMillis();
+      String jwt = Jwts.builder()
+              .signWith(key)
+              .setSubject(Integer.toString(userData.getId()))
+              .setIssuedAt(new Date(time))
+              .setExpiration(new Date(time+1200000))
+              .compact();
+
+
+    }
+
+
+      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
+    }
 
     // Return a response with status 200 and JSON as type
-    return Response.status(400).entity("Endpoint not implemented yet").build();
+    return Response.status(400).entity("Endpoint not implemented yet").build();*/
   }
 
   // TODO: Make the system able to delete users : FIX

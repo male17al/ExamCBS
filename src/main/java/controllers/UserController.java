@@ -171,4 +171,21 @@ public class UserController {
   return newUserData;
   }
 
+  public static Boolean autorizeUser (String email, String password) {
+      //check for DB connection
+      if (dbCon == null) {
+          dbCon = new DatabaseController();
+      }
+
+      //Find user with the username and password entered
+      dbCon.query("SELECT * FROM user where email='"+email+"' AND password='"+password+"'");
+
+      if (email != null && password != null) {
+          return true;
+      }
+      else {
+          return false;
+      }
+  }
+
   }
