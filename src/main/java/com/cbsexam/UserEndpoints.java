@@ -1,6 +1,8 @@
 package com.cbsexam;
 
 import cache.UserCache;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.google.gson.Gson;
 import com.sun.javafx.scene.traversal.Algorithm;
 import controllers.UserController;
@@ -36,17 +38,17 @@ public class UserEndpoints {
 
     try {
 
-    // Use the ID to get the user from the controller.
-    User user = UserController.getUser(idUser);
+      // Use the ID to get the user from the controller.
+      User user = UserController.getUser(idUser);
 
-    // TODO: Add Encryption to JSON : FIX
-    // Convert the user object to json in order to return the object
-    String json = new Gson().toJson(user);
+      // TODO: Add Encryption to JSON : FIX
+      // Convert the user object to json in order to return the object
+      String json = new Gson().toJson(user);
 
-    //Encryption added through the encryption method in utils
-    json = Encryption.encryptDecryptXOR(json);
+      //Encryption added through the encryption method in utils
+      json = Encryption.encryptDecryptXOR(json);
 
-    // TODO: What should happen if something breaks down? : FIX
+      // TODO: What should happen if something breaks down? : FIX
       //Failure-handling
       //Try-catch is cathing exceptions if something goes wrong
 
@@ -54,18 +56,19 @@ public class UserEndpoints {
       or status code 404 (NOT FOUND) if user id doesn't exist.*/
       if (user != null) {
         return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-      }
-      else {
+      } else {
         //Returning status code 404 but showing "User ID not found" to the user.
         return Response.status(404).entity("User ID not found").build();
       }
-      } catch (Exception e) {
+    } catch (Exception e) {
       return Response.status(404).build();
     }
   }
 
 
-  /** @return Responses */
+  /**
+   * @return Responses
+   */
   @GET
   @Path("/")
   public Response getUsers() {
@@ -119,39 +122,43 @@ public class UserEndpoints {
   @POST
   @Path("/login")
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response loginUser(String body) {
+  public Response loginUser(String body) throws JWTVerificationException {
 
     // Read the json from body and transfer it to a user class
     User userData = new Gson().fromJson(body, User.class);
 
+    //TODO: password skal hashes
     User userToLogin = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
 
-    //TODO: Husk at kryptere token
+    //TODO: Skal token hashes/krypteres?
 
     try {
       if (userToLogin != null && userToLogin.getToken() == null) {
 
-        //Creating a token for the user
-        String token = createToken(userToLogin);
-
         //Update token in DB
-        UserController.updateToken(token, userToLogin);
+        UserController.updateToken(userToLogin);
 
-        String json = new Gson().toJson(token);
+        //Get token to json in order for us to print it later
+        String json = new Gson().toJson(userToLogin.getToken());
 
         return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + json).build();
 
       } else if (userToLogin != null && userToLogin.getToken() != null) {
-        String currentToken = userToLogin.getToken();
+        Jwts.parser().setSigningKey(Keys.secretKeyFor(SignatureAlgorithm.HS256)).parseClaimsJws(userToLogin.getToken());
 
+        String currentToken = userToLogin.getToken();
         return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + currentToken).build();
-      } else {
-        return Response.status(400).entity("Email or password are wrong").build();
       }
-    } catch (Exception e) {
-      return Response.status(404).build();
+      else {
+        return Response.status(400).entity("Email or password are wrong").build();
+
+      }
+    } catch (JWTVerificationException e) {
+      String token = UserController.updateToken(userToLogin);
+      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + token).build();
     }
   }
+
 
   // TODO: Make the system able to delete users : FIX
 
@@ -214,7 +221,8 @@ public class UserEndpoints {
     return UserController.getUser(userID) != null;
   }
 
-  private String createToken (User user) {
+  /*private String createToken (User user) {
+    //Source: https://github.com/auth0/java-jwt
     Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     long time = System.currentTimeMillis();
     String jwt = Jwts.builder()
@@ -224,5 +232,5 @@ public class UserEndpoints {
             .setExpiration(new Date(time + 900000))
             .compact();
     return jwt;
-  }
+  }*/
 }
