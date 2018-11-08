@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import com.cbsexam.UserEndpoints;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import model.User;
 import utils.Hashing;
 import utils.Log;
@@ -46,8 +43,7 @@ public class UserController {
                         rs.getString("first_name"),
                         rs.getString("last_name"),
                         rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getString("token"));
+                        rs.getString("email"));
 
 
         // return the create object
@@ -91,8 +87,7 @@ public class UserController {
                         rs.getString("first_name"),
                         rs.getString("last_name"),
                         rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getString("token"));
+                        rs.getString("email"));
 
 
         // Add element to list
@@ -204,8 +199,8 @@ public class UserController {
                         rs.getString("first_name"),
                         rs.getString("last_name"),
                         rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getString("token"));
+                        rs.getString("email"));
+
 
         //Return the created object
         return user;
@@ -218,53 +213,4 @@ public class UserController {
     return user;
   }
 
-  public static String updateToken(User user) {
-
-    // Write in log that we've reach this step
-    Log.writeLog(UserController.class.getName(), user, "Actually updating a token in DB", 0);
-
-    //Creating token:
-    //Source: https://github.com/auth0/java-jwt
-    //https://github.com/jwtk/jjwt
-    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    long time = System.currentTimeMillis();
-    String jwt = Jwts.builder()
-            .signWith(key)
-            .setSubject(Integer.toString(user.getId()))
-            .setIssuedAt(new Date(time))
-            .setExpiration(new Date(time + 30000))
-            .compact();
-
-    //Setting token
-    user.setToken(jwt);
-
-    // Check for DB Connection
-    if (dbCon == null) {
-      dbCon = new DatabaseController();
-    }
-
-    // Insert the token in the DB
-    dbCon.update("UPDATE user SET token='" + jwt + "' WHERE id='" + user.getId() + "'");
-
-    // Return user
-    return jwt;
-
-  }
-
-  /*public static String getToken(User user) {
-
-    // Write in log that we've reach this step
-    Log.writeLog(UserController.class.getName(), user, "Actually getting a token in DB", 0);
-
-    // Check for DB Connection
-    if (dbCon == null) {
-      dbCon = new DatabaseController();
-    }
-
-    // Select token from DB
-    dbCon.query("SELECT token FROM user WHERE id='" + user.getId() + "'");
-
-    // Return token
-    return user.getToken();
-  }*/
 }

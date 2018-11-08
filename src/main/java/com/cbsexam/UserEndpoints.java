@@ -1,24 +1,21 @@
 package com.cbsexam;
 
 import cache.UserCache;
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.google.gson.Gson;
-import com.sun.javafx.scene.traversal.Algorithm;
 import controllers.UserController;
 import java.util.ArrayList;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import io.jsonwebtoken.security.Keys;
 import model.User;
 import utils.Encryption;
 import utils.Log;
-import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
-import java.security.Key;
-import io.jsonwebtoken.*;
 import java.util.Date;
 
 @Path("user")
@@ -26,7 +23,6 @@ public class UserEndpoints {
 
   //Creating a new instance of userCache
   UserCache userCache = new UserCache();
-
 
   /**
    * @param idUser
@@ -122,40 +118,34 @@ public class UserEndpoints {
   @POST
   @Path("/login")
   @Consumes(MediaType.APPLICATION_JSON)
-  public Response loginUser(String body) throws JWTVerificationException {
+  public Response loginUser(String body) {
 
     // Read the json from body and transfer it to a user class
     User userData = new Gson().fromJson(body, User.class);
 
     //TODO: password skal hashes
+
     User userToLogin = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
 
-    //TODO: Skal token hashes/krypteres?
-
     try {
-      if (userToLogin != null && userToLogin.getToken() == null) {
+      //Checking if user exists and if the user has a token
+      if (userToLogin != null) {
 
-        //Update token in DB
-        UserController.updateToken(userToLogin);
+        String token = createToken(userToLogin);
+        //Setting token
+        userToLogin.setToken(token);
 
         //Get token to json in order for us to print it later
         String json = new Gson().toJson(userToLogin.getToken());
 
         return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + json).build();
 
-      } else if (userToLogin != null && userToLogin.getToken() != null) {
-        Jwts.parser().setSigningKey(Keys.secretKeyFor(SignatureAlgorithm.HS256)).parseClaimsJws(userToLogin.getToken());
-
-        String currentToken = userToLogin.getToken();
-        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + currentToken).build();
       }
       else {
-        return Response.status(400).entity("Email or password are wrong").build();
-
+        return Response.status(400).entity("User not found. Email or password are wrong.").build();
       }
-    } catch (JWTVerificationException e) {
-      String token = UserController.updateToken(userToLogin);
-      return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + token).build();
+    } catch (Exception e) {
+      return Response.status(404).build();
     }
   }
 
@@ -221,16 +211,32 @@ public class UserEndpoints {
     return UserController.getUser(userID) != null;
   }
 
-  /*private String createToken (User user) {
-    //Source: https://github.com/auth0/java-jwt
-    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    long time = System.currentTimeMillis();
-    String jwt = Jwts.builder()
-            .signWith(key)
-            .setSubject(Integer.toString(user.getId()))
-            .setIssuedAt(new Date(time))
-            .setExpiration(new Date(time + 900000))
-            .compact();
-    return jwt;
-  }*/
+private String createToken (User user) {
+  try {
+    Algorithm algorithm = Algorithm.HMAC256("secret");
+    String token = JWT.create()
+            .withIssuer("auth0")
+            .withIssuedAt(new Date(System.currentTimeMillis()))
+            .withExpiresAt(new Date(System.currentTimeMillis() + 900000))
+            .withSubject(Integer.toString(user.getId()))
+            .sign(algorithm);
+    return token;
+  } catch (JWTCreationException exception) {
+    return null;
+  }
+}
+
+private boolean verifyToken (String token, User user) {
+  try {
+    Algorithm algorithm = Algorithm.HMAC256("secret");
+    JWTVerifier verifier = JWT.require(algorithm)
+            .withIssuer("auth0")
+            .withSubject(Integer.toString(user.getId()))
+            .build();
+    verifier.verify(token);
+    return true;
+  } catch (JWTVerificationException exception) {
+    return false;
+  }
+}
 }
