@@ -81,7 +81,7 @@ public class OrderController {
     String sql = "SELECT \n" +
             "\tuser.id as user_id, user.first_name, user.last_name, user.email, \n" +
             "    orders.id as order_id, orders.billing_address_id, orders.shipping_address_id,\n" +
-            "    product.product_name, product.price,\n" +
+            "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price,\n" +
             "    line_item.quantity,\n" +
             "    orders.order_total,\n" +
             "    b.street_address as billing_address,\n" +
@@ -120,7 +120,7 @@ public class OrderController {
                       rs.getString("email"));
 
               Product product = new Product(
-                              0,
+                              rs.getInt("product_id"),
                               rs.getString("product_name"),
                               null,
                               rs.getFloat("price"),
@@ -132,7 +132,7 @@ public class OrderController {
 
                   LineItem lineItem =
                           new LineItem(
-                                  0,
+                                  rs.getInt("line_item_id"),
                                   product,
                                   rs.getInt("quantity"),
                                   0);
