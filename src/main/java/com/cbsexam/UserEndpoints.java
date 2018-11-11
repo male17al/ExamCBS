@@ -125,7 +125,7 @@ public class UserEndpoints {
 
     //TODO: password skal hashes
 
-    User userToLogin = UserController.autorizeUser(userData.getEmail(), userData.getPassword());
+    User userToLogin = UserController.authorizeUser(userData.getEmail(), userData.getPassword());
 
     try {
       //Checking if user exists and if the user has a token
@@ -211,8 +211,10 @@ public class UserEndpoints {
     return UserController.getUser(userID) != null;
   }
 
+  //Inspiration from source: https://github.com/auth0/java-jwt
 private String createToken (User user) {
   try {
+    //TODO: SMID SECRET KEY I CONFIG!!!! Den må ikke kunne findes
     Algorithm algorithm = Algorithm.HMAC256("secret");
     String token = JWT.create()
             .withIssuer("auth0")
@@ -226,6 +228,7 @@ private String createToken (User user) {
   }
 }
 
+//Inspiration from source: https://github.com/auth0/java-jwt
 private boolean verifyToken (String token, User user) {
   try {
     Algorithm algorithm = Algorithm.HMAC256("secret");

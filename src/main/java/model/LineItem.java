@@ -18,7 +18,9 @@ public class LineItem {
     this.product = product;
     this.quantity = quantity;
     this.price = price;
-  }
+}
+
+
 
   public int getId() {
     return id;

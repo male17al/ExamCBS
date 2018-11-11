@@ -1,10 +1,8 @@
 package controllers;
 
-import java.security.Key;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
 
 import com.cbsexam.UserEndpoints;
 import model.User;
@@ -178,7 +176,7 @@ public class UserController {
     return newUserData;
   }
 
-  public static User autorizeUser(String email, String password) {
+  public static User authorizeUser(String email, String password) {
     //check for DB connection
     if (dbCon == null) {
       dbCon = new DatabaseController();
@@ -210,6 +208,7 @@ public class UserController {
     } catch (SQLException ex) {
       System.out.println(ex.getMessage());
     }
+    //Return null
     return user;
   }
 

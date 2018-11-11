@@ -3,10 +3,10 @@ package controllers;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import model.Address;
-import model.LineItem;
-import model.Order;
-import model.User;
+import java.util.HashMap;
+import java.util.Map;
+
+import model.*;
 import utils.Log;
 
 public class OrderController {
@@ -34,7 +34,7 @@ public class OrderController {
     try {
       if (rs.next()) {
 
-        // Perhaps we could optimize things a bit here and get rid of nested queries.
+        // TODO: Perhaps we could optimize things a bit here and get rid of nested queries.
         User user = UserController.getUser(rs.getInt("user_id"));
         ArrayList<LineItem> lineItems = LineItemController.getLineItemsForOrder(rs.getInt("id"));
         Address billingAddress = AddressController.getAddress(rs.getInt("billing_address_id"));
@@ -76,19 +76,102 @@ public class OrderController {
       dbCon = new DatabaseController();
     }
 
-    String sql = "SELECT * FROM orders";
+    //String sql = "SELECT * FROM orders INNER JOIN first_name, last_name, email FROM user ON";
+
+    String sql = "SELECT \n" +
+            "\tuser.id as user_id, user.first_name, user.last_name, user.email, \n" +
+            "    orders.id as order_id, orders.billing_address_id, orders.shipping_address_id,\n" +
+            "    product.product_name, product.price,\n" +
+            "    line_item.quantity,\n" +
+            "    orders.order_total,\n" +
+            "    b.street_address as billing_address,\n" +
+            "    b.city as billing_address_city,\n" +
+            "    b.zipcode as billing_address_zipcode,\n" +
+            "    s.street_address as shipping_address,\n" +
+            "    s.city as shipping_address_city,\n" +
+            "    s.zipcode as shipping_address_zipcode\n" +
+            "    FROM user\n" +
+            "    INNER JOIN orders ON user.id = orders.user_id\n" +
+            "    INNER JOIN line_item on line_item.order_id = orders.id\n" +
+            "    INNER JOIN product on product.id = line_item.product_id\n" +
+            "    INNER JOIN address b on orders.billing_address_id = b.id\n" +
+            "    INNER JOIN address s on orders.shipping_address_id = s.id";
 
     ResultSet rs = dbCon.query(sql);
-    ArrayList<Order> orders = new ArrayList<Order>();
+    //ArrayList<Order> orders = new ArrayList<Order>();
+
+      Map<Integer, Order> orders = new HashMap<>();
 
     try {
       while(rs.next()) {
 
+          int orderId = rs.getInt("order_id");
+
+          Order order = null;
+          if (orders.containsKey(orderId)) {
+              order = orders.get(orderId);
+          }
+          else {
+              User user = new User(
+                      rs.getInt("user_id"),
+                      rs.getString("first_name"),
+                      rs.getString("last_name"),
+                      null,
+                      rs.getString("email"));
+
+              Product product = new Product(
+                              0,
+                              rs.getString("product_name"),
+                              null,
+                              rs.getFloat("price"),
+                              null,
+                              0);
+
+              // Initialize an instance of the line item object
+              ArrayList<LineItem> items = new ArrayList<>();
+
+                  LineItem lineItem =
+                          new LineItem(
+                                  0,
+                                  product,
+                                  rs.getInt("quantity"),
+                                  0);
+                  items.add(lineItem);
+
+                  Address billing_address = new Address(
+                          rs.getInt("billing_address_id"),
+                          null,
+                          rs.getString("billing_address"),
+                          rs.getString("billing_address_city"),
+                          rs.getString("billing_address_zipcode")
+                  );
+
+                  Address shipping_address = new Address(
+                          rs.getInt("shipping_address_id"),
+                          null,
+                          rs.getString("shipping_address"),
+                          rs.getString("shipping_address_city"),
+                          rs.getString("shipping_address_zipcode")
+                  );
+
+              order = new Order(
+                      rs.getInt("order_id"),
+                      user,
+                      items,
+                      billing_address,
+                      shipping_address,
+                      rs.getFloat("order_total"),
+                      0,
+                      0);
+
+              orders.put(orderId, order);
+          }
+
         // TODO: Perhaps we could optimize things a bit here and get rid of nested queries. (ikke en todo så fjern den efter)
-        User user = UserController.getUser(rs.getInt("user_id"));
-        ArrayList<LineItem> lineItems = LineItemController.getLineItemsForOrder(rs.getInt("id"));
-        Address billingAddress = AddressController.getAddress(rs.getInt("billing_address_id"));
-        Address shippingAddress = AddressController.getAddress(rs.getInt("shipping_address_id"));
+         /* User user = UserController.getUser(rs.getInt("user_id"));
+          ArrayList<LineItem> lineItems = LineItemController.getLineItemsForOrder(rs.getInt("id"));
+          Address billingAddress = AddressController.getAddress(rs.getInt("billing_address_id"));
+          Address shippingAddress = AddressController.getAddress(rs.getInt("shipping_address_id"));
 
         // Create an order from the database data
         Order order =
@@ -103,7 +186,7 @@ public class OrderController {
                 rs.getLong("updated_at"));
 
         // Add order to our list
-        orders.add(order);
+        orders.add(order);*/
 
       }
     } catch (SQLException ex) {
@@ -111,7 +194,7 @@ public class OrderController {
     }
 
     // return the orders
-    return orders;
+    return new ArrayList<Order> (orders.values());
   }
 
   public static Order createOrder(Order order) {
