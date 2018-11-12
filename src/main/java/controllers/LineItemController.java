@@ -34,6 +34,7 @@ public class LineItemController {
       // Loop through the results from the DB
       while (rs.next()) {
 
+        //TODO Check om der kan optimeres her
         // Construct a product base on the row data with product_id
         Product product = ProductController.getProduct(rs.getInt("product_id"));
 

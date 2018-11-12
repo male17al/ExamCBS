@@ -25,7 +25,24 @@ public class OrderController {
     }
 
     // Build SQL string to query
-    String sql = "SELECT * FROM orders where id=" + id;
+      String sql = "SELECT \n" +
+              "\tuser.id as user_id, user.first_name, user.last_name, user.email, \n" +
+              "    orders.id as order_id, orders.billing_address_id, orders.shipping_address_id,\n" +
+              "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price,\n" +
+              "    line_item.quantity,\n" +
+              "    orders.order_total,\n" +
+              "    b.street_address as billing_address,\n" +
+              "    b.city as billing_address_city,\n" +
+              "    b.zipcode as billing_address_zipcode,\n" +
+              "    s.street_address as shipping_address,\n" +
+              "    s.city as shipping_address_city,\n" +
+              "    s.zipcode as shipping_address_zipcode\n" +
+              "    FROM user\n" +
+              "    INNER JOIN orders ON user.id = orders.user_id\n" +
+              "    INNER JOIN line_item on line_item.order_id = orders.id\n" +
+              "    INNER JOIN product on product.id = line_item.product_id\n" +
+              "    INNER JOIN address b on orders.billing_address_id = b.id\n" +
+              "    INNER JOIN address s on orders.shipping_address_id = s.id where order_id =" + id;
 
     // Do the query in the database and create an empty object for the results
     ResultSet rs = dbCon.query(sql);
@@ -34,26 +51,65 @@ public class OrderController {
     try {
       if (rs.next()) {
 
-        // TODO: Perhaps we could optimize things a bit here and get rid of nested queries.
-        User user = UserController.getUser(rs.getInt("user_id"));
-        ArrayList<LineItem> lineItems = LineItemController.getLineItemsForOrder(rs.getInt("id"));
-        Address billingAddress = AddressController.getAddress(rs.getInt("billing_address_id"));
-        Address shippingAddress = AddressController.getAddress(rs.getInt("shipping_address_id"));
+        //Perhaps we could optimize things a bit here and get rid of nested queries.
+              User user = new User(
+                      rs.getInt("user_id"),
+                      rs.getString("first_name"),
+                      rs.getString("last_name"),
+                      null,
+                      rs.getString("email"));
 
-        // Create an object instance of order from the database dataa
-        order =
-            new Order(
-                rs.getInt("id"),
-                user,
-                lineItems,
-                billingAddress,
-                shippingAddress,
-                rs.getFloat("order_total"),
-                rs.getLong("created_at"),
-                rs.getLong("updated_at"));
+              Product product = new Product(
+                      rs.getInt("product_id"),
+                      rs.getString("product_name"),
+                      null,
+                      rs.getFloat("price"),
+                      null,
+                      0);
 
-        // Returns the build order
-        return order;
+              // Initialize an instance of the line item object
+              ArrayList<LineItem> items = new ArrayList<>();
+
+
+                  LineItem lineItem =
+                          new LineItem(
+                                  rs.getInt("line_item_id"),
+                                  product,
+                                  rs.getInt("quantity"),
+                                  0);
+
+                      items.add(lineItem);
+
+
+          Address billing_address = new Address(
+                      rs.getInt("billing_address_id"),
+                      null,
+                      rs.getString("billing_address"),
+                      rs.getString("billing_address_city"),
+                      rs.getString("billing_address_zipcode")
+              );
+
+              Address shipping_address = new Address(
+                      rs.getInt("shipping_address_id"),
+                      null,
+                      rs.getString("shipping_address"),
+                      rs.getString("shipping_address_city"),
+                      rs.getString("shipping_address_zipcode")
+              );
+
+              order = new Order(
+                      rs.getInt("order_id"),
+                      user,
+                      items,
+                      billing_address,
+                      shipping_address,
+                      rs.getFloat("order_total"),
+                      0,
+                      0);
+
+              // Returns the build order
+              return order;
+
       } else {
         System.out.println("No order found");
       }
@@ -98,18 +154,39 @@ public class OrderController {
             "    INNER JOIN address s on orders.shipping_address_id = s.id";
 
     ResultSet rs = dbCon.query(sql);
-    //ArrayList<Order> orders = new ArrayList<Order>();
 
       Map<Integer, Order> orders = new HashMap<>();
 
     try {
       while(rs.next()) {
 
+          //Perhaps we could optimize things a bit here and get rid of nested queries.
           int orderId = rs.getInt("order_id");
 
-          Order order = null;
+          Order order;
           if (orders.containsKey(orderId)) {
-              order = orders.get(orderId);
+
+
+              Product product = new Product(
+                      rs.getInt("product_id"),
+                      rs.getString("product_name"),
+                      null,
+                      rs.getFloat("price"),
+                      null,
+                      0);
+
+
+              LineItem lineItem =
+                      new LineItem(
+                              rs.getInt("line_item_id"),
+                              product,
+                              rs.getInt("quantity"),
+                              0);
+
+              orders.get(orderId).getLineItems().add(lineItem);
+
+
+
           }
           else {
               User user = new User(
@@ -166,28 +243,6 @@ public class OrderController {
 
               orders.put(orderId, order);
           }
-
-        // TODO: Perhaps we could optimize things a bit here and get rid of nested queries. (ikke en todo så fjern den efter)
-         /* User user = UserController.getUser(rs.getInt("user_id"));
-          ArrayList<LineItem> lineItems = LineItemController.getLineItemsForOrder(rs.getInt("id"));
-          Address billingAddress = AddressController.getAddress(rs.getInt("billing_address_id"));
-          Address shippingAddress = AddressController.getAddress(rs.getInt("shipping_address_id"));
-
-        // Create an order from the database data
-        Order order =
-            new Order(
-                rs.getInt("id"),
-                user,
-                lineItems,
-                billingAddress,
-                shippingAddress,
-                rs.getFloat("order_total"),
-                rs.getLong("created_at"),
-                rs.getLong("updated_at"));
-
-        // Add order to our list
-        orders.add(order);*/
-
       }
     } catch (SQLException ex) {
       System.out.println(ex.getMessage());
