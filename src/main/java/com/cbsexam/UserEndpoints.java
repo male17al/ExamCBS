@@ -14,7 +14,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import model.User;
+import utils.Config;
 import utils.Encryption;
+import utils.Hashing;
 import utils.Log;
 import java.util.Date;
 
@@ -114,7 +116,7 @@ public class UserEndpoints {
     }
   }
 
-  // TODO: Make the system able to login users and assign them a token to use throughout the system.
+  // TODO: Make the system able to login users and assign them a token to use throughout the system. FIX
   @POST
   @Path("/login")
   @Consumes(MediaType.APPLICATION_JSON)
@@ -123,9 +125,7 @@ public class UserEndpoints {
     // Read the json from body and transfer it to a user class
     User userData = new Gson().fromJson(body, User.class);
 
-    //TODO: password skal hashes
-
-    User userToLogin = UserController.authorizeUser(userData.getEmail(), userData.getPassword());
+    User userToLogin = UserController.authorizeUser(userData.getEmail(), Hashing.md5(userData.getPassword()));
 
     try {
       //Checking if user exists and if the user has a token
@@ -155,67 +155,68 @@ public class UserEndpoints {
     @POST
     @Path("/deleteuser/")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteUser(String userID) {
+    public Response deleteUser(String body) {
 
-      // Read the json from body and transfer it to a user class
-      User chosenUserID = new Gson().fromJson(userID, User.class);
+      try {
+        // Read the json from body and transfer it to a user class
+        User chosenUser = new Gson().fromJson(body, User.class);
 
-      if (doesUserIDExist(chosenUserID.getId())) {
+        if (verifyToken(chosenUser.getToken(), chosenUser)) {
 
-      // Use the controller to delete the user with the chosen user ID
-      UserController.deleteUser((chosenUserID.getId()));
+          // Use the controller to delete the user with the chosen user ID
+          UserController.deleteUser((chosenUser.getId()));
 
-        // Return if the user could be deleted or not
-        // Return a response with status 200 and JSON as type
-        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUserID.getId() + " has been deleted").build();
-      } else {
-        return Response.status(400).entity("User ID not found").build();
+          // Return if the user could be deleted or not
+          // Return a response with status 200 and JSON as type
+          return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUser.getId() + " has been deleted").build();
+        } else {
+          return Response.status(400).entity("The token and user id do not correspond").build();
+        }
+      } catch (Exception e) {
+        return Response.status(400).build();
       }
     }
 
   // TODO: Make the system able to update users : FIX
   @PUT
-  @Path("/updateUser/{idUser}")
+  @Path("/updateUser/")
   @Consumes(MediaType.APPLICATION_JSON)
 
-  public Response updateUser(@PathParam("idUser") int idUser, String body) {
+  public Response updateUser(String body) {
 
     try {
-      // Use the ID to get the user from the controller.
-      User chosenUser = UserController.getUser(idUser);
-
       // Read the json from body and transfer it to a user class
       User newUserData = new Gson().fromJson(body, User.class);
 
-      //Update the user with the chosen id with the new data
-      UserController.updateUser(idUser, newUserData);
+      //Verifies if any of the fields are empty
+      if (!newUserData.getFirstname().isEmpty() && !newUserData.getLastname().isEmpty() && !newUserData.getPassword().isEmpty() && !newUserData.getEmail().isEmpty()) {
+      //Verifies the token if none of the above are empty
+        if (verifyToken(newUserData.getToken(), newUserData)) {
 
-      //Creating new user object in order for the program to print out the new user data with the user id
-      User updatedUser = UserController.getUser(idUser);
+          //Update the user with the chosen id with the new data
+          UserController.updateUser(newUserData.getId(), newUserData);
 
-      // Convert the user object to json in order to return the object
-      String json = new Gson().toJson(updatedUser);
+          // Convert the user object to json in order to return the object
+          String json = new Gson().toJson(newUserData);
 
-      if (chosenUser != null) {
-        // Return a response with status 200 and JSON as type
-        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-      } else {
-        return Response.status(404).entity("User id not found").build();
+          // Return a response with status 200 and JSON as type
+          return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("The following data has been updated\n" + json).build();
+        }
+        else {
+        return Response.status(404).entity("Could not verify token").build();
       }
+      } else {
+        return Response.status(400).entity("You can't leave any fields blank. \nIf there are any data you don't want to update simply just input your old data at that field.").build();
+        }
     } catch (Exception e) {
-      return Response.status(404).build();
+      return Response.status(400).build();
     }
-  }
-
-  private Boolean doesUserIDExist (int userID) {
-    return UserController.getUser(userID) != null;
   }
 
   //Inspiration from source: https://github.com/auth0/java-jwt
 private String createToken (User user) {
   try {
-    //TODO: SMID SECRET KEY I CONFIG!!!! Den må ikke kunne findes
-    Algorithm algorithm = Algorithm.HMAC256("secret");
+    Algorithm algorithm = Algorithm.HMAC256(Config.getTokenKey());
     String token = JWT.create()
             .withIssuer("auth0")
             .withIssuedAt(new Date(System.currentTimeMillis()))
@@ -231,7 +232,7 @@ private String createToken (User user) {
 //Inspiration from source: https://github.com/auth0/java-jwt
 private boolean verifyToken (String token, User user) {
   try {
-    Algorithm algorithm = Algorithm.HMAC256("secret");
+    Algorithm algorithm = Algorithm.HMAC256(Config.getTokenKey());
     JWTVerifier verifier = JWT.require(algorithm)
             .withIssuer("auth0")
             .withSubject(Integer.toString(user.getId()))

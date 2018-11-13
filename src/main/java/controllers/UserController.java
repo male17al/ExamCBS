@@ -182,6 +182,8 @@ public class UserController {
       dbCon = new DatabaseController();
     }
 
+    //Hashing the user password:
+
     //Build the query for DB
     String sql = "SELECT * FROM user where email='" + email + "' AND password='" + password + "'";
 

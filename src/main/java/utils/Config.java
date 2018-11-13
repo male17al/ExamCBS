@@ -24,6 +24,11 @@ public final class Config {
   private static long ORDER_TTL;
   private static String ENCRYPTION_KEY;
   private static String SALT_KEY;
+  private static String TOKEN_KEY;
+
+  public static String getTokenKey() {
+    return TOKEN_KEY;
+  }
 
   public static long getProductTtl() {
     return PRODUCT_TTL;
@@ -123,6 +128,7 @@ public final class Config {
     USER_TTL = json.get("USER_TTL").getAsLong();
     ENCRYPTION_KEY = json.get("ENCRYPTION_KEY").toString();
     SALT_KEY = json.get("SALT_KEY").toString();
+    TOKEN_KEY = json.get("TOKEN_KEY").toString();
 
   }
 }
