@@ -166,6 +166,10 @@ public class UserEndpoints {
           // Use the controller to delete the user with the chosen user ID
           UserController.deleteUser((chosenUser.getId()));
 
+          //Update the usercache if a user is deleted
+          userCache.getUsers(true);
+
+
           // Return if the user could be deleted or not
           // Return a response with status 200 and JSON as type
           return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUser.getId() + " has been deleted").build();
@@ -194,10 +198,13 @@ public class UserEndpoints {
         if (verifyToken(newUserData.getToken(), newUserData)) {
 
           //Update the user with the chosen id with the new data
-          UserController.updateUser(newUserData.getId(), newUserData);
+          User updatedUserData = UserController.updateUser(newUserData.getId(), newUserData);
+
+          //Update the usercache if a user is updated
+          userCache.getUsers(true);
 
           // Convert the user object to json in order to return the object
-          String json = new Gson().toJson(newUserData);
+          String json = new Gson().toJson(updatedUserData);
 
           // Return a response with status 200 and JSON as type
           return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("The following data has been updated\n" + json).build();

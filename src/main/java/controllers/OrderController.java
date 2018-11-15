@@ -37,20 +37,19 @@ public class OrderController {
               "    s.street_address as shipping_address,\n" +
               "    s.city as shipping_address_city,\n" +
               "    s.zipcode as shipping_address_zipcode\n" +
-              "    FROM user\n" +
-              "    INNER JOIN orders ON user.id = orders.user_id\n" +
+              "    FROM orders\n" +
+              "    INNER JOIN user ON user.id = orders.user_id\n" +
               "    INNER JOIN line_item on line_item.order_id = orders.id\n" +
               "    INNER JOIN product on product.id = line_item.product_id\n" +
               "    INNER JOIN address b on orders.billing_address_id = b.id\n" +
-              "    INNER JOIN address s on orders.shipping_address_id = s.id where order_id =" + id;
+              "    INNER JOIN address s on orders.shipping_address_id = s.id where orders.id =" + id;
 
     // Do the query in the database and create an empty object for the results
     ResultSet rs = dbCon.query(sql);
     Order order = null;
 
     try {
-      if (rs.next()) {
-
+        if (rs.next()) {
         //Perhaps we could optimize things a bit here and get rid of nested queries.
               User user = new User(
                       rs.getInt("user_id"),
@@ -59,53 +58,57 @@ public class OrderController {
                       null,
                       rs.getString("email"));
 
-              Product product = new Product(
-                      rs.getInt("product_id"),
-                      rs.getString("product_name"),
-                      null,
-                      rs.getFloat("price"),
-                      null,
-                      0);
+            Address billing_address = new Address(
+                    rs.getInt("billing_address_id"),
+                    null,
+                    rs.getString("billing_address"),
+                    rs.getString("billing_address_city"),
+                    rs.getString("billing_address_zipcode")
+            );
 
-              // Initialize an instance of the line item object
+            Address shipping_address = new Address(
+                    rs.getInt("shipping_address_id"),
+                    null,
+                    rs.getString("shipping_address"),
+                    rs.getString("shipping_address_city"),
+                    rs.getString("shipping_address_zipcode")
+            );
+
+
+            // Initialize an instance of the line item object
               ArrayList<LineItem> items = new ArrayList<>();
 
+            order = new Order(
+                    rs.getInt("order_id"),
+                    user,
+                    items,
+                    billing_address,
+                    shipping_address,
+                    rs.getFloat("order_total"),
+                    0,
+                    0);
+            do {
 
-                  LineItem lineItem =
-                          new LineItem(
-                                  rs.getInt("line_item_id"),
-                                  product,
-                                  rs.getInt("quantity"),
-                                  0);
+                Product product = new Product(
+                        rs.getInt("product_id"),
+                        rs.getString("product_name"),
+                        null,
+                        rs.getFloat("price"),
+                        null,
+                        0);
 
-                      items.add(lineItem);
+                LineItem lineItem =
+                        new LineItem(
+                                rs.getInt("line_item_id"),
+                                product,
+                                rs.getInt("quantity"),
+                                0);
+
+                items.add(lineItem);
+            } while (rs.next());
 
 
-          Address billing_address = new Address(
-                      rs.getInt("billing_address_id"),
-                      null,
-                      rs.getString("billing_address"),
-                      rs.getString("billing_address_city"),
-                      rs.getString("billing_address_zipcode")
-              );
 
-              Address shipping_address = new Address(
-                      rs.getInt("shipping_address_id"),
-                      null,
-                      rs.getString("shipping_address"),
-                      rs.getString("shipping_address_city"),
-                      rs.getString("shipping_address_zipcode")
-              );
-
-              order = new Order(
-                      rs.getInt("order_id"),
-                      user,
-                      items,
-                      billing_address,
-                      shipping_address,
-                      rs.getFloat("order_total"),
-                      0,
-                      0);
 
               // Returns the build order
               return order;
