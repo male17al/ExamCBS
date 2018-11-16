@@ -183,7 +183,7 @@ public class UserEndpoints {
 
   // TODO: Make the system able to update users : FIX
   @PUT
-  @Path("/updateUser/")
+  @Path("/updateuser/")
   @Consumes(MediaType.APPLICATION_JSON)
 
   public Response updateUser(String body) {

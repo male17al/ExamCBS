@@ -28,8 +28,8 @@ public class OrderController {
       String sql = "SELECT \n" +
               "\tuser.id as user_id, user.first_name, user.last_name, user.email, \n" +
               "    orders.id as order_id, orders.billing_address_id, orders.shipping_address_id,\n" +
-              "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price,\n" +
-              "    line_item.quantity,\n" +
+              "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price, product.stock,\n" +
+              "    line_item.quantity, line_item.price,\n" +
               "    orders.order_total,\n" +
               "    b.street_address as billing_address,\n" +
               "    b.city as billing_address_city,\n" +
@@ -95,14 +95,14 @@ public class OrderController {
                         null,
                         rs.getFloat("price"),
                         null,
-                        0);
+                        rs.getInt("stock"));
 
                 LineItem lineItem =
                         new LineItem(
                                 rs.getInt("line_item_id"),
                                 product,
                                 rs.getInt("quantity"),
-                                0);
+                                rs.getFloat("price"));
 
                 items.add(lineItem);
             } while (rs.next());
@@ -140,8 +140,8 @@ public class OrderController {
     String sql = "SELECT \n" +
             "\tuser.id as user_id, user.first_name, user.last_name, user.email, \n" +
             "    orders.id as order_id, orders.billing_address_id, orders.shipping_address_id,\n" +
-            "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price,\n" +
-            "    line_item.quantity,\n" +
+            "    product.id as product_id, line_item.id as line_item_id, product.product_name, product.price, product.stock,\n" +
+            "    line_item.quantity, line_item.price,\n" +
             "    orders.order_total,\n" +
             "    b.street_address as billing_address,\n" +
             "    b.city as billing_address_city,\n" +
@@ -149,8 +149,8 @@ public class OrderController {
             "    s.street_address as shipping_address,\n" +
             "    s.city as shipping_address_city,\n" +
             "    s.zipcode as shipping_address_zipcode\n" +
-            "    FROM user\n" +
-            "    INNER JOIN orders ON user.id = orders.user_id\n" +
+            "    FROM orders\n" +
+            "    INNER JOIN user ON user.id = orders.user_id\n" +
             "    INNER JOIN line_item on line_item.order_id = orders.id\n" +
             "    INNER JOIN product on product.id = line_item.product_id\n" +
             "    INNER JOIN address b on orders.billing_address_id = b.id\n" +
@@ -176,7 +176,7 @@ public class OrderController {
                       null,
                       rs.getFloat("price"),
                       null,
-                      0);
+                      rs.getInt("stock"));
 
 
               LineItem lineItem =
@@ -184,7 +184,7 @@ public class OrderController {
                               rs.getInt("line_item_id"),
                               product,
                               rs.getInt("quantity"),
-                              0);
+                              rs.getFloat("price"));
 
               orders.get(orderId).getLineItems().add(lineItem);
 
@@ -205,7 +205,7 @@ public class OrderController {
                               null,
                               rs.getFloat("price"),
                               null,
-                              0);
+                              rs.getInt("stock"));
 
               // Initialize an instance of the line item object
               ArrayList<LineItem> items = new ArrayList<>();
@@ -215,7 +215,7 @@ public class OrderController {
                                   rs.getInt("line_item_id"),
                                   product,
                                   rs.getInt("quantity"),
-                                  0);
+                                  rs.getFloat("price"));
                   items.add(lineItem);
 
                   Address billing_address = new Address(
@@ -300,7 +300,7 @@ public class OrderController {
                       + order.getUpdatedAt()
                       + ")");
 
-      if (orderID != 0) {
+          if (orderID != 0) {
         //Update the productid of the product before returning
         order.setId(orderID);
       }

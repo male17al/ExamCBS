@@ -40,7 +40,7 @@ public class UserController {
                         rs.getInt("id"),
                         rs.getString("first_name"),
                         rs.getString("last_name"),
-                        rs.getString("password"),
+                        null,
                         rs.getString("email"));
 
 
@@ -84,7 +84,7 @@ public class UserController {
                         rs.getInt("id"),
                         rs.getString("first_name"),
                         rs.getString("last_name"),
-                        rs.getString("password"),
+                        null,
                         rs.getString("email"));
 
 
