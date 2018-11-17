@@ -91,20 +91,39 @@ public class DatabaseController {
       connection = getConnection();
 
     try {
+      //Set autoocmmit = false. This is by default set as true
+      //The reason its set to false is cause we dont want it to execute each statement but execute them all as "one" statement
+      connection.setAutoCommit(false);
       // Build the statement up in a safe way
       PreparedStatement statement =
               connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
       // Execute query
       result = statement.executeUpdate();
+      //Commiting all the data together
+      connection.commit();
 
       // Get our key back in order to update the user
       ResultSet generatedKeys = statement.getGeneratedKeys();
       if (generatedKeys.next()) {
         return generatedKeys.getInt(1);
       }
+
     } catch (SQLException e) {
       System.out.println(e.getMessage());
+      try {
+        connection.rollback();
+      } catch (SQLException e1) {
+        e1.printStackTrace();
+      }
+    }
+    finally {
+      try {
+        //Set autocommit back to true again
+        connection.setAutoCommit(true);
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
     }
 
     // Return the resultset which at this point will be null
