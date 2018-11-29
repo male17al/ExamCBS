@@ -131,14 +131,15 @@ public class UserEndpoints {
       //Checking if user exists and if the user has a token
       if (userToLogin != null) {
 
-        String token = createToken(userToLogin);
+        //Creating token
+        String token = createToken(userToLogin.getId());
         //Setting token
         userToLogin.setToken(token);
 
         //Get token to json in order for us to print it later
         String json = new Gson().toJson(userToLogin.getToken());
 
-        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. This is your token: \n" + json).build();
+        return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("You have been logged in. Please save your token. This is your token: \n" + json).build();
 
       }
       else {
@@ -161,7 +162,7 @@ public class UserEndpoints {
         // Read the json from body and transfer it to a user class
         User chosenUser = new Gson().fromJson(body, User.class);
 
-        if (verifyToken(chosenUser.getToken(), chosenUser)) {
+        if (verifyToken(chosenUser.getToken(), chosenUser.getId())) {
 
           // Use the controller to delete the user with the chosen user ID
           UserController.deleteUser((chosenUser.getId()));
@@ -172,7 +173,7 @@ public class UserEndpoints {
 
           // Return if the user could be deleted or not
           // Return a response with status 200 and JSON as type
-          return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("User with the userID " + chosenUser.getId() + " has been deleted").build();
+          return Response.status(200).type(MediaType.APPLICATION_JSON_TYPE).entity("The user with the userID " + chosenUser.getId() + " has been deleted").build();
         } else {
           return Response.status(400).entity("The token and user id do not correspond").build();
         }
@@ -192,10 +193,10 @@ public class UserEndpoints {
       // Read the json from body and transfer it to a user class
       User newUserData = new Gson().fromJson(body, User.class);
 
-      //Verifies if any of the fields are empty
+      //Checks if any of the fields are empty
       if (!newUserData.getFirstname().isEmpty() && !newUserData.getLastname().isEmpty() && !newUserData.getPassword().isEmpty() && !newUserData.getEmail().isEmpty()) {
       //Verifies the token if none of the above are empty
-        if (verifyToken(newUserData.getToken(), newUserData)) {
+        if (verifyToken(newUserData.getToken(), newUserData.getId())) {
 
           //Update the user with the chosen id with the new data
           User updatedUserData = UserController.updateUser(newUserData.getId(), newUserData);
@@ -221,14 +222,14 @@ public class UserEndpoints {
   }
 
   //Inspiration from source: https://github.com/auth0/java-jwt
-private String createToken (User user) {
+private String createToken (int userId) {
   try {
     Algorithm algorithm = Algorithm.HMAC256(Config.getTokenKey());
     String token = JWT.create()
-            .withIssuer("auth0")
+            .withIssuer("Martin")
             .withIssuedAt(new Date(System.currentTimeMillis()))
             .withExpiresAt(new Date(System.currentTimeMillis() + 900000))
-            .withSubject(Integer.toString(user.getId()))
+            .withSubject(Integer.toString(userId))
             .sign(algorithm);
     return token;
   } catch (JWTCreationException exception) {
@@ -237,12 +238,12 @@ private String createToken (User user) {
 }
 
 //Inspiration from source: https://github.com/auth0/java-jwt
-private boolean verifyToken (String token, User user) {
+private boolean verifyToken (String token, int userId) {
   try {
     Algorithm algorithm = Algorithm.HMAC256(Config.getTokenKey());
     JWTVerifier verifier = JWT.require(algorithm)
-            .withIssuer("auth0")
-            .withSubject(Integer.toString(user.getId()))
+            .withIssuer("Martin")
+            .withSubject(Integer.toString(userId))
             .build();
     verifier.verify(token);
     return true;

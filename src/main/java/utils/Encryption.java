@@ -7,9 +7,8 @@ public final class Encryption {
     // If encryption is enabled in Config.
     if (Config.getEncryption()) {
 
-      // The key is predefined and hidden in code
       // TODO: Create a more complex code and store it somewhere better : FIX
-
+      //The key is stored in config.json
       //Stored encryptionKey in config.json as a string and parsing it to a char array
       char [] encryptionKey = Config.getEncryptionKey().toCharArray();
 
