@@ -1,5 +1,6 @@
 package controllers;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import utils.Log;
 public class OrderController {
 
   private static DatabaseController dbCon;
+  private static Connection connection;
 
   public OrderController() {
     dbCon = new DatabaseController();
@@ -257,61 +259,90 @@ public class OrderController {
 
   public static Order createOrder(Order order) {
 
-      // Write in log that we've reach this step
-      Log.writeLog(OrderController.class.getName(), order, "Actually creating a order in DB", 0);
+      try {
+          connection = dbCon.getConnection();
+          //Set autocommit = false. This is by default set as true
+          //The reason its set to false is cause we dont want it to execute each statement but execute them all as "one" statement
+          connection.setAutoCommit(false);
 
-      // Set creation and updated time for order.
-      order.setCreatedAt(System.currentTimeMillis() / 1000L);
-      order.setUpdatedAt(System.currentTimeMillis() / 1000L);
+          // Write in log that we've reach this step
+          Log.writeLog(OrderController.class.getName(), order, "Actually creating a order in DB", 0);
 
-      // Check for DB Connection
-      if (dbCon == null) {
-        dbCon = new DatabaseController();
-      }
+          // Set creation and updated time for order.
+          order.setCreatedAt(System.currentTimeMillis() / 1000L);
+          order.setUpdatedAt(System.currentTimeMillis() / 1000L);
 
-      // Save addresses to database and save them back to initial order instance
-      order.setBillingAddress(AddressController.createAddress(order.getBillingAddress()));
-      order.setShippingAddress(AddressController.createAddress(order.getShippingAddress()));
+          // Check for DB Connection
+          if (dbCon == null) {
+              dbCon = new DatabaseController();
+          }
 
-      // Save the user to the database and save them back to initial order instance
-      order.setCustomer(UserController.createUser(order.getCustomer()));
+          // Save addresses to database and save them back to initial order instance
+          order.setBillingAddress(AddressController.createAddress(order.getBillingAddress()));
+          order.setShippingAddress(AddressController.createAddress(order.getShippingAddress()));
 
-      // TODO: Enable transactions in order for us to not save the order if somethings fails for some of the other inserts. : FIX
-        //Source used: https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html
+          // Save the user to the database and save them back to initial order instance
+          order.setCustomer(UserController.createUser(order.getCustomer()));
 
-      // Insert the product in the DB
-      int orderID = dbCon.insert(
-              "INSERT INTO orders(user_id, billing_address_id, shipping_address_id, order_total, created_at, updated_at) VALUES("
-                      + order.getCustomer().getId()
-                      + ", "
-                      + order.getBillingAddress().getId()
-                      + ", "
-                      + order.getShippingAddress().getId()
-                      + ", "
-                      + order.calculateOrderTotal()
-                      + ", "
-                      + order.getCreatedAt()
-                      + ", "
-                      + order.getUpdatedAt()
-                      + ")");
+          // TODO: Enable transactions in order for us to not save the order if somethings fails for some of the other inserts. : FIX
+          //Source used: https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html
+
+          // Insert the product in the DB
+          int orderID = dbCon.insert(
+                  "INSERT INTO orders(user_id, billing_address_id, shipping_address_id, order_total, created_at, updated_at) VALUES("
+                          + order.getCustomer().getId()
+                          + ", "
+                          + order.getBillingAddress().getId()
+                          + ", "
+                          + order.getShippingAddress().getId()
+                          + ", "
+                          + order.calculateOrderTotal()
+                          + ", "
+                          + order.getCreatedAt()
+                          + ", "
+                          + order.getUpdatedAt()
+                          + ")");
 
           if (orderID != 0) {
-        //Update the productid of the product before returning
-        order.setId(orderID);
-      }
+              //Update the productid of the product before returning
+              order.setId(orderID);
+          }
 
-      // Create an empty list in order to go trough items and then save them back with ID
-      ArrayList<LineItem> items = new ArrayList<LineItem>();
+          // Create an empty list in order to go trough items and then save them back with ID
+          ArrayList<LineItem> items = new ArrayList<LineItem>();
 
-      // Save line items to database
-      for (LineItem item : order.getLineItems()) {
-        item = LineItemController.createLineItem(item, order.getId());
-        items.add(item);
-      }
+          // Save line items to database
+          for (LineItem item : order.getLineItems()) {
+              item = LineItemController.createLineItem(item, order.getId());
+              items.add(item);
+          }
 
-      order.setLineItems(items);
+          order.setLineItems(items);
+
+          //Committing it all together
+          connection.commit();
 
           //Return order
           return order;
+      } catch (SQLException e) {
+          System.out.println(e.getMessage());
+          if (connection != null) {
+              try {
+                  //If something fails system will be rolled back and the order will not be created
+                  System.out.println("Something failed. System is being rolled back");
+                  connection.rollback();
+              } catch (SQLException e1) {
+                  e1.printStackTrace();
+              }
+          }
+      } finally {
+          try {
+              //Setting autocommit back to default value
+              connection.setAutoCommit(true);
+          } catch (SQLException e2) {
+              e2.printStackTrace();
+          }
+      }
+      return order;
       }
   }
